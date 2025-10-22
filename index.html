@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视器解剖学互动游戏</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 统一的 Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0070c0',
+                        secondary: '#e6f7ff',
+                        accent: '#00a0e9',
+                        success: '#52c41a',
+                        error: '#ff4d4f',
+                        warning: '#faad14',
+                        info: '#1890ff',
+                        light: '#f0f2f5',
+                        dark: '#141414'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .transition-all-300 {
+                transition: all 300ms ease-in-out;
+            }
+            .hover-scale {
+                @apply transition-all duration-300;
+            }
+            .hover-scale:hover {
+                transform: scale(1.03);
+            }
+            .anatomy-hotspot {
+                @apply absolute w-6 h-6 rounded-full bg-red-500 border-2 border-white cursor-pointer transform -translate-x-1/2 -translate-y-1/2 opacity-0 transition-opacity duration-300;
+            }
+            .anatomy-hotspot.visible {
+                @apply opacity-100;
+            }
+            .anatomy-hotspot:hover {
+                @apply bg-red-600 scale-110;
+            }
+            .anatomy-hotspot.active {
+                @apply bg-green-500;
+            }
+            .anatomy-hotspot.incorrect {
+                @apply bg-red-500;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <!-- 游戏容器 -->
+    <div id="game-container" class="max-w-6xl mx-auto px-4 py-8">
+        <!-- 游戏标题 -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-primary mb-2">视器解剖学互动游戏</h1>
+            <p class="text-gray-600">测试你对视器解剖学知识的掌握程度！</p>
+        </header>
+
+        <!-- 开始界面 -->
+        <div id="start-screen" class="bg-white rounded-xl shadow-lg p-8 mb-8 text-center">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/2c2045fa85127dcb39682fc035a731fe~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1765757793&x-signature=nAfdZ7KtY3qlwo96kxtJf%2Bog%2FzU%3D" 
+                 alt="眼球解剖图" 
+                 class="w-48 h-48 object-contain mx-auto mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">准备好挑战了吗？</h2>
+            <p class="text-gray-600 mb-6">这个游戏包含10道题目，测试你对视器解剖学的了解。</p>
+            <button id="start-btn" class="bg-primary hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 hover:shadow-lg">
+                开始游戏
+            </button>
+        </div>
+
+        <!-- 游戏界面 -->
+        <div id="game-screen" class="hidden">
+            <!-- 进度条 -->
+            <div class="bg-white rounded-xl shadow-md p-4 mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-medium text-gray-700">题目 <span id="current-question">1</span>/10</span>
+                    <span class="text-sm font-medium text-gray-700">得分: <span id="score">0</span></span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-primary h-2.5 rounded-full" style="width: 10%"></div>
+                </div>
+            </div>
+
+            <!-- 题目区域 -->
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- 左侧题目 -->
+                <div class="lg:w-1/2 bg-white rounded-xl shadow-lg p-6 hover-scale">
+                    <h2 id="question-text" class="text-xl font-bold text-gray-800 mb-4">题目加载中...</h2>
+                    
+                    <!-- 选择题选项 -->
+                    <div id="options-container" class="space-y-3 mb-6">
+                        <!-- 选项将通过JS动态生成 -->
+                    </div>
+                    
+                    <!-- 解剖图识别题提示 -->
+                    <div id="hotspot-instruction" class="hidden bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fa fa-info-circle text-blue-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">
+                                    请点击右侧解剖图中对应的结构。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 答题反馈 -->
+                    <div id="feedback" class="hidden mb-6 p-4 rounded-lg"></div>
+                    
+                    <!-- 解析 -->
+                    <div id="explanation" class="hidden bg-gray-50 p-4 rounded-lg mb-6">
+                        <h3 class="font-bold text-gray-700 mb-2">解析</h3>
+                        <p id="explanation-text" class="text-gray-600"></p>
+                    </div>
+                    
+                    <!-- 导航按钮 -->
+                    <div class="flex justify-between">
+                        <button id="prev-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fa fa-arrow-left mr-2"></i>上一题
+                        </button>
+                        <button id="next-btn" class="bg-primary hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300">
+                            下一题<i class="fa fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 右侧图片/反馈区 -->
+                <div class="lg:w-1/2 bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center">
+                    <!-- 解剖图 -->
+                    <div id="anatomy-image-container" class="relative w-full h-80 mb-6 hidden">
+                        <img id="anatomy-image" src="" alt="解剖图" class="w-full h-full object-contain">
+                        <!-- 热点将通过JS动态生成 -->
+                    </div>
+                    
+                    <!-- 答题情况统计 -->
+                    <div id="stats-container" class="w-full bg-gray-50 rounded-lg p-4">
+                        <h3 class="font-bold text-gray-700 mb-2">答题情况</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <div id="stats-correct" class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-green-500 mr-1"></span>
+                                <span class="text-sm">正确: <span id="correct-count">0</span></span>
+                            </div>
+                            <div id="stats-incorrect" class="flex items-center ml-4">
+                                <span class="w-3 h-3 rounded-full bg-red-500 mr-1"></span>
+                                <span class="text-sm">错误: <span id="incorrect-count">0</span></span>
+                            </div>
+                            <div id="stats-unanswered" class="flex items-center ml-4">
+                                <span class="w-3 h-3 rounded-full bg-gray-300 mr-1"></span>
+                                <span class="text-sm">未答: <span id="unanswered-count">10</span></span>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <span class="text-sm font-medium">用时: </span>
+                            <span id="time-elapsed" class="text-sm">00:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果界面 -->
+        <div id="result-screen" class="hidden bg-white rounded-xl shadow-lg p-8 text-center">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">游戏结束！</h2>
+            <div class="flex justify-center mb-6">
+                <div class="w-32 h-32 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-bold">
+                    <span id="final-score">0</span>
+                </div>
+            </div>
+            <p class="text-xl text-gray-600 mb-2">你的得分: <span id="final-score-text">0/10</span></p>
+            <p class="text-gray-600 mb-2">用时: <span id="final-time">00:00</span></p>
+            <div class="flex justify-center gap-4 mb-6">
+                <div class="bg-green-100 px-4 py-2 rounded-lg">
+                    <p class="text-green-700 font-medium">正确: <span id="final-correct">0</span></p>
+                </div>
+                <div class="bg-red-100 px-4 py-2 rounded-lg">
+                    <p class="text-red-700 font-medium">错误: <span id="final-incorrect">0</span></p>
+                </div>
+            </div>
+            <div id="result-message" class="text-lg font-medium mb-6"></div>
+            <div class="flex justify-center gap-4">
+                <button id="retry-btn" class="bg-primary hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300">
+                    再试一次
+                </button>
+                <button id="review-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg transition-all duration-300">
+                    查看解析
+                </button>
+            </div>
+        </div>
+
+        <!-- 解析界面 -->
+        <div id="review-screen" class="hidden">
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">题目解析</h2>
+                <div id="review-list" class="space-y-6">
+                    <!-- 解析将通过JS动态生成 -->
+                </div>
+                <div class="mt-8 text-center">
+                    <button id="back-to-result-btn" class="bg-primary hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300">
+                        返回结果
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 题目数据
+        const questions = [
+            {
+                id: 1,
+                type: 'multiple-choice',
+                text: '眼球壁的外层由哪两部分组成？',
+                options: [
+                    '角膜和巩膜',
+                    '虹膜和睫状体',
+                    '视网膜和脉络膜',
+                    '晶状体和玻璃体'
+                ],
+                correctAnswer: 0,
+                explanation: '眼球壁的外层（纤维膜）由前1/6的角膜和后5/6的巩膜组成。角膜透明，有屈光作用；巩膜乳白色，坚韧，起保护作用。'
+            },
+            {
+                id: 2,
+                type: 'multiple-choice',
+                text: '下列哪项结构负责调节进入眼内的光线量？',
+                options: [
+                    '角膜',
+                    '晶状体',
+                    '虹膜',
+                    '视网膜'
+                ],
+                correctAnswer: 2,
+                explanation: '虹膜中央有瞳孔，虹膜的肌肉可以控制瞳孔的大小，从而调节进入眼内的光线量。在强光下，瞳孔缩小；在弱光下，瞳孔放大。'
+            },
+            {
+                id: 3,
+                type: 'hotspot',
+                text: '请指出图中标注为"视网膜"的结构。',
+                image: 'https://p11-doubao-search-sign.byteimg.com/labis/2c2045fa85127dcb39682fc035a731fe~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1765757793&x-signature=nAfdZ7KtY3qlwo96kxtJf%2Bog%2FzU%3D',
+                hotspots: [
+                    { x: 25, y: 40, label: '巩膜' },
+                    { x: 40, y: 35, label: '视网膜' },
+                    { x: 55, y: 30, label: '虹膜' },
+                    { x: 65, y: 30, label: '角膜' }
+                ],
+                correctAnswer: 1,
+                explanation: '视网膜是眼球壁的内层，位于脉络膜内侧，是视觉形成的起点。视网膜上有感光细胞（视锥细胞和视杆细胞），能将光信号转化为神经冲动。'
+            },
+            {
+                id: 4,
+                type: 'multiple-choice',
+                text: '视觉传导通路中，第三级神经元位于：',
+                options: [
+                    '视网膜双极细胞',
+                    '视网膜节细胞',
+                    '外侧膝状体',
+                    '视皮层'
+                ],
+                correctAnswer: 2,
+                explanation: '视觉传导通路由三级神经元组成：第一级神经元为视网膜双极细胞；第二级神经元为视网膜节细胞；第三级神经元胞体位于外侧膝状体，其轴突组成视辐射，投射至大脑枕叶视中枢。'
+            },
+            {
+                id: 5,
+                type: 'hotspot',
+                text: '请指出图中标注为"视交叉"的结构。',
+                image: 'https://p26-doubao-search-sign.byteimg.com/labis/abf408af015c49f0c7a8a2aba759bc11~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1765757793&x-signature=g%2Fqf%2Bs8Hb6X4Kum3ayL4IGdYcRc%3D',
+                hotspots: [
+                    { x: 30, y: 45, label: '视神经' },
+                    { x: 50, y: 45, label: '视交叉' },
+                    { x: 70, y: 45, label: '视束' },
+                    { x: 80, y: 70, label: '外侧膝状体' }
+                ],
+                correctAnswer: 1,
+                explanation: '视交叉位于大脑底部，是视神经的延续。在视交叉处，来自两眼视网膜鼻侧半的纤维交叉，颞侧半的纤维不交叉，形成视束。'
+            },
+            {
+                id: 6,
+                type: 'multiple-choice',
+                text: '房水的循环途径正确的是：',
+                options: [
+                    '睫状体产生→后房→瞳孔→前房→巩膜静脉窦→眼静脉',
+                    '虹膜产生→前房→瞳孔→后房→巩膜静脉窦→眼静脉',
+                    '睫状体产生→前房→瞳孔→后房→巩膜静脉窦→眼静脉',
+                    '虹膜产生→后房→瞳孔→前房→巩膜静脉窦→眼静脉'
+                ],
+                correctAnswer: 0,
+                explanation: '房水由睫状体产生，首先进入眼后房，经瞳孔流入眼前房，然后通过虹膜角膜角进入巩膜静脉窦，最后汇入眼静脉。房水具有屈光、营养角膜和晶状体、维持眼压的作用。'
+            },
+            {
+                id: 7,
+                type: 'multiple-choice',
+                text: '视网膜上哪种细胞负责感受强光和色觉？',
+                options: [
+                    '视杆细胞',
+                    '视锥细胞',
+                    '双极细胞',
+                    '节细胞'
+                ],
+                correctAnswer: 1,
+                explanation: '视网膜上的感光细胞包括视锥细胞和视杆细胞。视锥细胞主要分布在视网膜中央部，能感受强光和色觉，对细节和颜色敏感；视杆细胞主要分布在视网膜周边部，对弱光敏感，负责暗视觉。'
+            },
+            {
+                id: 8,
+                type: 'hotspot',
+                text: '请指出图中标注为"晶状体"的结构。',
+                image: 'https://p26-doubao-search-sign.byteimg.com/labis/c600de3e7834d050a63bd349a8ff5fe7~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1765757793&x-signature=TtnBJnb%2B%2F8rRT58mYeCSG6t26C0%3D',
+                hotspots: [
+                    { x: 25, y: 50, label: '角膜' },
+                    { x: 40, y: 50, label: '虹膜' },
+                    { x: 55, y: 50, label: '晶状体' },
+                    { x: 70, y: 50, label: '玻璃体' }
+                ],
+                correctAnswer: 2,
+                explanation: '晶状体是一个富有弹性的双凸透明体，位于虹膜和玻璃体之间。晶状体通过改变形状来调节屈光力，使眼睛能看清不同距离的物体，这一过程称为调节。'
+            },
+            {
+                id: 9,
+                type: 'multiple-choice',
+                text: '下列哪项不属于眼附属器？',
+                options: [
+                    '眼睑',
+                    '结膜',
+                    '泪器',
+                    '晶状体'
+                ],
+                correctAnswer: 3,
+                explanation: '眼附属器包括眼睑、结膜、泪器、眼球外肌、眶筋膜和眶脂体等，它们对眼球起到保护、润滑和运动的作用。晶状体属于眼球内容物，是屈光系统的组成部分。'
+            },
+            {
+                id: 10,
+                type: 'multiple-choice',
+                text: '当一侧视束受损时，会导致：',
+                options: [
+                    '该侧眼视野全盲',
+                    '双眼视野颞侧半偏盲',
+                    '双眼对侧视野同向性偏盲',
+                    '双眼视野鼻侧半偏盲'
+                ],
+                correctAnswer: 2,
+                explanation: '视束含有来自两眼视网膜同侧半的纤维。当一侧视束受损时，会导致双眼对侧视野同向性偏盲，即患侧眼鼻侧视野和健侧眼颞侧视野缺损。'
+            }
+        ];
+
+        // 游戏状态
+        const gameState = {
+            currentQuestion: 0,
+            score: 0,
+            answers: [],
+            startTime: null,
+            endTime: null
+        };
+
+        // DOM元素
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        
+        const startBtn = document.getElementById('start-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const retryBtn = document.getElementById('retry-btn');
+        const reviewBtn = document.getElementById('review-btn');
+        const backToResultBtn = document.getElementById('back-to-result-btn');
+        
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const anatomyImageContainer = document.getElementById('anatomy-image-container');
+        const anatomyImage = document.getElementById('anatomy-image');
+        const hotspotInstruction = document.getElementById('hotspot-instruction');
+        const feedback = document.getElementById('feedback');
+        const explanation = document.getElementById('explanation');
+        const explanationText = document.getElementById('explanation-text');
+        
+        const currentQuestionSpan = document.getElementById('current-question');
+        const scoreSpan = document.getElementById('score');
+        const progressBar = document.getElementById('progress-bar');
+        
+        const correctCountSpan = document.getElementById('correct-count');
+        const incorrectCountSpan = document.getElementById('incorrect-count');
+        const unansweredCountSpan = document.getElementById('unanswered-count');
+        const timeElapsedSpan = document.getElementById('time-elapsed');
+        
+        const finalScoreSpan = document.getElementById('final-score');
+        const finalScoreTextSpan = document.getElementById('final-score-text');
+        const finalTimeSpan = document.getElementById('final-time');
+        const finalCorrectSpan = document.getElementById('final-correct');
+        const finalIncorrectSpan = document.getElementById('final-incorrect');
+        const resultMessageSpan = document.getElementById('result-message');
+        
+        const reviewList = document.getElementById('review-list');
+
+        // 初始化游戏
+        function initGame() {
+            gameState.currentQuestion = 0;
+            gameState.score = 0;
+            gameState.answers = Array(questions.length).fill(null);
+            gameState.startTime = new Date();
+            
+            updateStats();
+            showQuestion(0);
+            
+            startScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            resultScreen.classList.add('hidden');
+            reviewScreen.classList.add('hidden');
+            
+            // 开始计时
+            startTimer();
+        }
+
+        // 显示题目
+        function showQuestion(index) {
+            const question = questions[index];
+            
+            // 更新题目文本
+            questionText.textContent = question.text;
+            
+            // 更新当前题目索引
+            currentQuestionSpan.textContent = index + 1;
+            
+            // 更新进度条
+            progressBar.style.width = `${(index + 1) * 10}%`;
+            
+            // 清空选项容器
+            optionsContainer.innerHTML = '';
+            
+            // 隐藏解剖图容器
+            anatomyImageContainer.classList.add('hidden');
+            hotspotInstruction.classList.add('hidden');
+            
+            // 根据题目类型显示不同内容
+            if (question.type === 'multiple-choice') {
+                // 显示选择题选项
+                question.options.forEach((option, i) => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'option flex items-center p-3 border rounded-lg cursor-pointer transition-all duration-200';
+                    
+                    // 如果这个选项已经被选择，添加选中样式
+                    if (gameState.answers[index] === i) {
+                        optionDiv.classList.add('bg-blue-50', 'border-blue-500');
+                    }
+                    
+                    optionDiv.innerHTML = `
+                        <div class="option-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center mr-3">
+                            <div class="option-radio-inner w-3 h-3 rounded-full ${gameState.answers[index] === i ? 'bg-blue-500' : ''}"></div>
+                        </div>
+                        <div class="option-text">${option}</div>
+                    `;
+                    
+                    optionDiv.addEventListener('click', () => selectOption(i));
+                    optionsContainer.appendChild(optionDiv);
+                });
+            } else if (question.type === 'hotspot') {
+                // 显示解剖图识别题
+                anatomyImage.src = question.image;
+                anatomyImageContainer.classList.remove('hidden');
+                hotspotInstruction.classList.remove('hidden');
+                
+                // 创建热点
+                question.hotspots.forEach((hotspot, i) => {
+                    const hotspotDiv = document.createElement('div');
+                    hotspotDiv.className = `anatomy-hotspot ${gameState.answers[index] === i ? 'active' : ''}`;
+                    hotspotDiv.style.left = `${hotspot.x}%`;
+                    hotspotDiv.style.top = `${hotspot.y}%`;
+                    hotspotDiv.dataset.index = i;
+                    
+                    // 添加标签
+                    const labelDiv = document.createElement('div');
+                    labelDiv.className = 'absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 text-xs font-medium text-white bg-gray-800 px-2 py-1 rounded whitespace-nowrap';
+                    labelDiv.textContent = hotspot.label;
+                    hotspotDiv.appendChild(labelDiv);
+                    
+                    hotspotDiv.addEventListener('click', () => selectHotspot(i));
+                    anatomyImageContainer.appendChild(hotspotDiv);
+                    
+                    // 延迟显示热点，创建动画效果
+                    setTimeout(() => {
+                        hotspotDiv.classList.add('visible');
+                    }, i * 100);
+                });
+            }
+            
+            // 更新导航按钮状态
+            prevBtn.disabled = index === 0;
+            
+            // 显示/隐藏反馈和解析
+            if (gameState.answers[index] !== null) {
+                showFeedback(gameState.answers[index] === question.correctAnswer);
+                showExplanation();
+            } else {
+                hideFeedback();
+                hideExplanation();
+            }
+            
+            // 更新导航按钮文本
+            if (index === questions.length - 1) {
+                nextBtn.textContent = '完成游戏';
+                nextBtn.innerHTML = '完成游戏<i class="fa fa-check ml-2"></i>';
+            } else {
+                nextBtn.textContent = '下一题';
+                nextBtn.innerHTML = '下一题<i class="fa fa-arrow-right ml-2"></i>';
+            }
+        }
+
+        // 选择选择题选项
+        function selectOption(optionIndex) {
+            const currentQuestion = questions[gameState.currentQuestion];
+            
+            // 记录答案
+            gameState.answers[gameState.currentQuestion] = optionIndex;
+            
+            // 更新选项样式
+            const options = optionsContainer.querySelectorAll('.option');
+            options.forEach((option, i) => {
+                if (i === optionIndex) {
+                    option.classList.add('bg-blue-50', 'border-blue-500');
+                    option.querySelector('.option-radio-inner').classList.add('bg-blue-500');
+                } else {
+                    option.classList.remove('bg-blue-50', 'border-blue-500');
+                    option.querySelector('.option-radio-inner').classList.remove('bg-blue-500');
+                }
+            });
+            
+            // 显示反馈
+            const isCorrect = optionIndex === currentQuestion.correctAnswer;
+            showFeedback(isCorrect);
+            
+            // 更新分数
+            if (isCorrect) {
+                gameState.score++;
+                scoreSpan.textContent = gameState.score;
+            }
+            
+            // 显示解析
+            showExplanation();
+            
+            // 更新统计
+            updateStats();
+        }
+
+        // 选择解剖图热点
+        function selectHotspot(hotspotIndex) {
+            const currentQuestion = questions[gameState.currentQuestion];
+            
+            // 记录答案
+            gameState.answers[gameState.currentQuestion] = hotspotIndex;
+            
+            // 更新热点样式
+            const hotspots = anatomyImageContainer.querySelectorAll('.anatomy-hotspot');
+            hotspots.forEach((hotspot, i) => {
+                hotspot.classList.remove('active', 'incorrect');
+                
+                if (i === hotspotIndex) {
+                    if (i === currentQuestion.correctAnswer) {
+                        hotspot.classList.add('active');
+                    } else {
+                        hotspot.classList.add('incorrect');
+                    }
+                }
+            });
+            
+            // 显示反馈
+            const isCorrect = hotspotIndex === currentQuestion.correctAnswer;
+            showFeedback(isCorrect);
+            
+            // 更新分数
+            if (isCorrect) {
+                gameState.score++;
+                scoreSpan.textContent = gameState.score;
+            }
+            
+            // 显示解析
+            showExplanation();
+            
+            // 更新统计
+            updateStats();
+        }
+
+        // 显示反馈
+        function showFeedback(isCorrect) {
+            feedback.classList.remove('hidden');
+            
+            if (isCorrect) {
+                feedback.className = 'bg-green-50 text-green-700 p-4 rounded-lg mb-6';
+                feedback.innerHTML = '<i class="fa fa-check-circle mr-2"></i>回答正确！';
+            } else {
+                feedback.className = 'bg-red-50 text-red-700 p-4 rounded-lg mb-6';
+                feedback.innerHTML = '<i class="fa fa-times-circle mr-2"></i>回答错误！';
+            }
+        }
+
+        // 隐藏反馈
+        function hideFeedback() {
+            feedback.classList.add('hidden');
+        }
+
+        // 显示解析
+        function showExplanation() {
+            const currentQuestion = questions[gameState.currentQuestion];
+            explanationText.textContent = currentQuestion.explanation;
+            explanation.classList.remove('hidden');
+        }
+
+        // 隐藏解析
+        function hideExplanation() {
+            explanation.classList.add('hidden');
+        }
+
+        // 更新统计
+        function updateStats() {
+            let correct = 0;
+            let incorrect = 0;
+            let unanswered = 0;
+            
+            gameState.answers.forEach((answer, index) => {
+                if (answer === null) {
+                    unanswered++;
+                } else if (answer === questions[index].correctAnswer) {
+                    correct++;
+                } else {
+                    incorrect++;
+                }
+            });
+            
+            correctCountSpan.textContent = correct;
+            incorrectCountSpan.textContent = incorrect;
+            unansweredCountSpan.textContent = unanswered;
+        }
+
+        // 开始计时器
+        function startTimer() {
+            gameState.timerInterval = setInterval(() => {
+                const now = new Date();
+                const elapsedTime = Math.floor((now - gameState.startTime) / 1000);
+                const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+                const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+                timeElapsedSpan.textContent = `${minutes}:${seconds}`;
+            }, 1000);
+        }
+
+        // 停止计时器
+        function stopTimer() {
+            clearInterval(gameState.timerInterval);
+            gameState.endTime = new Date();
+        }
+
+        // 显示结果
+        function showResult() {
+            stopTimer();
+            
+            // 计算用时
+            const elapsedTime = Math.floor((gameState.endTime - gameState.startTime) / 1000);
+            const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+            const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+            
+            // 更新结果
+            finalScoreSpan.textContent = gameState.score;
+            finalScoreTextSpan.textContent = `${gameState.score}/${questions.length}`;
+            finalTimeSpan.textContent = `${minutes}:${seconds}`;
+            
+            let correct = 0;
+            let incorrect = 0;
+            
+            gameState.answers.forEach((answer, index) => {
+                if (answer === questions[index].correctAnswer) {
+                    correct++;
+                } else if (answer !== null) {
+                    incorrect++;
+                }
+            });
+            
+            finalCorrectSpan.textContent = correct;
+            finalIncorrectSpan.textContent = incorrect;
+            
+            // 根据得分显示不同消息
+            if (gameState.score >= questions.length * 0.9) {
+                resultMessageSpan.textContent = '太棒了！你对视器解剖学知识掌握得非常好！';
+                resultMessageSpan.className = 'text-lg font-medium mb-6 text-green-600';
+            } else if (gameState.score >= questions.length * 0.7) {
+                resultMessageSpan.textContent = '不错！你对视器解剖学有很好的理解。';
+                resultMessageSpan.className = 'text-lg font-medium mb-6 text-blue-600';
+            } else if (gameState.score >= questions.length * 0.5) {
+                resultMessageSpan.textContent = '还可以，继续努力！';
+                resultMessageSpan.className = 'text-lg font-medium mb-6 text-yellow-600';
+            } else {
+                resultMessageSpan.textContent = '需要更多练习，建议复习视器解剖学知识。';
+                resultMessageSpan.className = 'text-lg font-medium mb-6 text-red-600';
+            }
+            
+            // 显示结果界面
+            gameScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+        }
+
+        // 生成解析
+        function generateReview() {
+            reviewList.innerHTML = '';
+            
+            questions.forEach((question, index) => {
+                const isCorrect = gameState.answers[index] === question.correctAnswer;
+                const isAnswered = gameState.answers[index] !== null;
+                
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `p-4 rounded-lg ${isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`;
+                
+                let answerText = '';
+                if (question.type === 'multiple-choice') {
+                    answerText = isAnswered ? question.options[gameState.answers[index]] : '未回答';
+                } else if (question.type === 'hotspot') {
+                    answerText = isAnswered ? question.hotspots[gameState.answers[index]].label : '未回答';
+                }
+                
+                const correctAnswerText = question.type === 'multiple-choice' ? 
+                    question.options[question.correctAnswer] : 
+                    question.hotspots[question.correctAnswer].label;
+                
+                reviewItem.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-gray-800">问题 ${index + 1}</h3>
+                        <span class="px-2 py-1 rounded text-xs font-medium ${isCorrect ? 'bg-green-100 text-green-800' : isAnswered ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}">
+                            ${isCorrect ? '正确' : isAnswered ? '错误' : '未回答'}
+                        </span>
+                    </div>
+                    <p class="text-gray-700 mb-3">${question.text}</p>
+                    ${question.type === 'hotspot' ? `
+                        <div class="w-full h-40 mb-3">
+                            <img src="${question.image}" alt="解剖图" class="w-full h-full object-contain">
+                        </div>
+                    ` : ''}
+                    <div class="mb-2">
+                        <span class="font-medium">你的答案：</span>
+                        <span class="${isCorrect ? 'text-green-700' : isAnswered ? 'text-red-700' : 'text-gray-500'}">${answerText}</span>
+                    </div>
+                    <div class="mb-3">
+                        <span class="font-medium">正确答案：</span>
+                        <span class="text-green-700">${correctAnswerText}</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded">
+                        <p class="text-gray-600 text-sm">${question.explanation}</p>
+                    </div>
+                `;
+                
+                reviewList.appendChild(reviewItem);
+            });
+            
+            // 显示解析界面
+            resultScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+        }
+
+        // 事件监听
+        startBtn.addEventListener('click', initGame);
+        
+        prevBtn.addEventListener('click', () => {
+            if (gameState.currentQuestion > 0) {
+                gameState.currentQuestion--;
+                showQuestion(gameState.currentQuestion);
+            }
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            if (gameState.currentQuestion < questions.length - 1) {
+                gameState.currentQuestion++;
+                showQuestion(gameState.currentQuestion);
+            } else {
+                showResult();
+            }
+        });
+        
+        retryBtn.addEventListener('click', initGame);
+        
+        reviewBtn.addEventListener('click', generateReview);
+        
+        backToResultBtn.addEventListener('click', () => {
+            reviewScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
