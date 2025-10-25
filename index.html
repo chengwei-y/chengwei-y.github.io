@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>颅脑骨性结构解剖学测验</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 统一的 Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1a56db',
+                        secondary: '#e2e8f0',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        info: '#3b82f6',
+                        light: '#f8fafc',
+                        dark: '#1e293b'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .highlight {
+                filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.8));
+                transition: all 0.3s ease;
+            }
+            .option-hover:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .progress-bar {
+                transition: width 0.5s ease-in-out;
+            }
+            .anatomy-part {
+                transition: all 0.3s ease;
+                cursor: pointer;
+            }
+            .anatomy-part:hover {
+                filter: brightness(1.2);
+            }
+            .correct {
+                animation: correct-pulse 1s ease-in-out;
+            }
+            .incorrect {
+                animation: incorrect-pulse 1s ease-in-out;
+            }
+            @keyframes correct-pulse {
+                0%, 100% { background-color: rgba(16, 185, 129, 0.2); }
+                50% { background-color: rgba(16, 185, 129, 0.5); }
+            }
+            @keyframes incorrect-pulse {
+                0%, 100% { background-color: rgba(239, 68, 68, 0.2); }
+                50% { background-color: rgba(239, 68, 68, 0.5); }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <!-- 顶部导航栏 -->
+        <header class="bg-primary text-white shadow-md">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <h1 class="text-2xl font-bold">颅脑骨性结构解剖学测验</h1>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:flex items-center space-x-2">
+                        <span class="text-sm">问题进度:</span>
+                        <div class="w-32 h-2 bg-gray-300 rounded-full overflow-hidden">
+                            <div id="progress-bar" class="h-full bg-white progress-bar" style="width: 20%"></div>
+                        </div>
+                        <span id="progress-text" class="text-sm">1/5</span>
+                    </div>
+                    <button id="help-btn" class="bg-white text-primary px-3 py-1 rounded-full text-sm hover:bg-gray-100 transition">
+                        <i class="fa fa-question-circle mr-1"></i> 帮助
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main class="flex-grow container mx-auto px-4 py-8">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <!-- 移动端进度条 -->
+                <div class="md:hidden p-4 border-b">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium">问题进度</span>
+                        <span id="mobile-progress-text" class="text-sm font-medium">1/5</span>
+                    </div>
+                    <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div id="mobile-progress-bar" class="h-full bg-primary progress-bar" style="width: 20%"></div>
+                    </div>
+                </div>
+
+                <!-- 内容区域 -->
+                <div class="p-6">
+                    <div class="flex flex-col lg:flex-row gap-8">
+                        <!-- 左侧解剖图区域 -->
+                        <div class="lg:w-1/2">
+                            <div class="bg-gray-100 rounded-lg p-4 flex items-center justify-center h-full">
+                                <div id="image-container" class="relative w-full max-w-md mx-auto">
+                                    <!-- 题目1: 颅骨组成 -->
+                                    <div id="question-1-image" class="question-image">
+                                        <img src="https://p11-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/997796262509805601~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1776921978&x-signature=A%2B5vkg7RHc8qVs%2F8FJW3XUtR4Js%3D" 
+                                             alt="颅骨组成" class="w-full h-auto rounded-lg">
+                                        <div id="highlight-frontal" class="absolute hidden" style="top: 20%; left: 25%; width: 50%; height: 30%; border: 2px solid #3b82f6; border-radius: 50%; pointer-events: none;"></div>
+                                        <div id="highlight-parietal" class="absolute hidden" style="top: 10%; left: 20%; width: 60%; height: 40%; border: 2px solid #3b82f6; border-radius: 50%; pointer-events: none;"></div>
+                                        <div id="highlight-temporal" class="absolute hidden" style="top: 30%; left: 10%; width: 20%; height: 30%; border: 2px solid #3b82f6; border-radius: 50%; pointer-events: none;"></div>
+                                        <div id="highlight-occipital" class="absolute hidden" style="top: 40%; left: 30%; width: 40%; height: 40%; border: 2px solid #3b82f6; border-radius: 50%; pointer-events: none;"></div>
+                                    </div>
+                                    
+                                    <!-- 题目2: 颅底结构 -->
+                                    <div id="question-2-image" class="question-image hidden">
+                                        <img src="https://p11-doubao-search-sign.byteimg.com/labis/f6ac6ea1c1c066f94ce14f9561338656~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1776921978&x-signature=DtlQqbNCIwT%2BeE7Ks6O7TblhZLI%3D" 
+                                             alt="颅底结构" class="w-full h-auto rounded-lg">
+                                        <div id="highlight-anterior-fossa" class="absolute hidden" style="top: 20%; left: 25%; width: 50%; height: 20%; border: 2px solid #3b82f6; border-radius: 50%; pointer-events: none;"></div>
+                                        <div id="highlight-middle-fossa" class="absolute hidden" style="top: 40%; left: 25%; width: 50%; height: 20%; border: 2px solid #3b82f6; border-radius: 50%; pointer-events: none;"></div>
+                                        <div id="highlight-posterior-fossa" class="absolute hidden" style="top: 60%; left: 25%; width: 50%; height: 20%; border: 2px solid #3b82f6; border-radius: 50%; pointer-events: none;"></div>
+                                    </div>
+                                    
+                                    <!-- 题目3: 颅缝 -->
+                                    <div id="question-3-image" class="question-image hidden">
+                                        <img src="https://p11-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/997794149394284551~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1776921978&x-signature=lLJVIR3jXwZuXMRUMZtkuAlZLFQ%3D" 
+                                             alt="颅缝" class="w-full h-auto rounded-lg">
+                                        <div id="highlight-coronal" class="absolute hidden" style="top: 25%; left: 20%; width: 60%; height: 5%; background-color: rgba(59, 130, 246, 0.5); pointer-events: none;"></div>
+                                        <div id="highlight-sagittal" class="absolute hidden" style="top: 20%; left: 48%; width: 4%; height: 60%; background-color: rgba(59, 130, 246, 0.5); pointer-events: none;"></div>
+                                        <div id="highlight-lambdoid" class="absolute hidden" style="top: 70%; left: 20%; width: 60%; height: 5%; background-color: rgba(59, 130, 246, 0.5); transform: rotate(15deg); pointer-events: none;"></div>
+                                    </div>
+                                    
+                                    <!-- 题目4: 颅骨孔裂 -->
+                                    <div id="question-4-image" class="question-image hidden">
+                                        <img src="https://p11-doubao-search-sign.byteimg.com/labis/c54d8dee64e137452c36988f08c19c79~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1776921978&x-signature=7%2FPeQxEiTo4M%2FcxibUz%2BHpfKEzA%3D" 
+                                             alt="颅骨孔裂" class="w-full h-auto rounded-lg">
+                                        <div id="highlight-foramen-magnum" class="absolute hidden" style="top: 70%; left: 40%; width: 20%; height: 20%; border: 2px solid #3b82f6; border-radius: 50%; pointer-events: none;"></div>
+                                        <div id="highlight-optic-canal" class="absolute hidden" style="top: 30%; left: 35%; width: 10%; height: 10%; border: 2px solid #3b82f6; border-radius: 50%; pointer-events: none;"></div>
+                                        <div id="highlight-jugular-foramen" class="absolute hidden" style="top: 60%; left: 25%; width: 10%; height: 10%; border: 2px solid #3b82f6; border-radius: 50%; pointer-events: none;"></div>
+                                    </div>
+                                    
+                                    <!-- 题目5: 颅骨骨折 -->
+                                    <div id="question-5-image" class="question-image hidden">
+                                        <img src="https://p11-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/923388049954439224~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1776921978&x-signature=7aMrBLbNo4OhUY%2BcCSg8yqIvpdw%3D" 
+                                             alt="颅骨骨折" class="w-full h-auto rounded-lg">
+                                        <div id="highlight-fracture-temporal" class="absolute hidden" style="top: 40%; left: 20%; width: 20%; height: 20%; border: 2px solid #ef4444; border-radius: 50%; pointer-events: none;"></div>
+                                        <div id="highlight-fracture-frontal" class="absolute hidden" style="top: 20%; left: 40%; width: 20%; height: 20%; border: 2px solid #ef4444; border-radius: 50%; pointer-events: none;"></div>
+                                        <div id="highlight-fracture-parietal" class="absolute hidden" style="top: 30%; left: 60%; width: 20%; height: 20%; border: 2px solid #ef4444; border-radius: 50%; pointer-events: none;"></div>
+                                    </div>
+                                    
+                                    <!-- 结果图像 -->
+                                    <div id="result-image" class="hidden">
+                                        <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/1070258803144130650~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1776921978&x-signature=0JF3HPpl8hraSL5pZi3icg7GvnA%3D" 
+                                             alt="大脑解剖" class="w-full h-auto rounded-lg">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右侧题目区域 -->
+                        <div class="lg:w-1/2">
+                            <div id="question-container">
+                                <!-- 题目1 -->
+                                <div id="question-1" class="question active">
+                                    <h2 class="text-2xl font-bold mb-4 text-gray-800">问题 1/5</h2>
+                                    <p class="text-lg mb-6 text-gray-700">以下哪块块颅骨不属于脑颅骨？</p>
+                                    <div class="space-y-3">
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="frontal">
+                                            <span class="font-medium">A. 额骨</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="parietal">
+                                            <span class="font-medium">B. 顶骨</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="true" data-part="maxilla">
+                                            <span class="font-medium">C. 上颌骨</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="temporal">
+                                            <span class="font-medium">D. 颞骨</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 题目2 -->
+                                <div id="question-2" class="question hidden">
+                                    <h2 class="text-2xl font-bold mb-4 text-gray-800">问题 2/5</h2>
+                                    <p class="text-lg mb-6 text-gray-700">颅底内面观中，哪个颅窝最深且面积最大，容纳小脑、脑桥和延髓？</p>
+                                    <div class="space-y-3">
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="anterior-fossa">
+                                            <span class="font-medium">A. 颅前窝</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="middle-fossa">
+                                            <span class="font-medium">B. 颅中窝</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="true" data-part="posterior-fossa">
+                                            <span class="font-medium">C. 颅后窝</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="none">
+                                            <span class="font-medium">D. 以上都不是</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 题目3 -->
+                                <div id="question-3" class="question hidden">
+                                    <h2 class="text-2xl font-bold mb-4 text-gray-800">问题 3/5</h2>
+                                    <p class="text-lg mb-6 text-gray-700">以下哪条颅缝位于左右顶骨之间？</p>
+                                    <div class="space-y-3">
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="coronal">
+                                            <span class="font-medium">A. 冠状缝</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="true" data-part="sagittal">
+                                            <span class="font-medium">B. 矢状缝</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="lambdoid">
+                                            <span class="font-medium">C. 人字缝</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="none">
+                                            <span class="font-medium">D. 鳞状缝</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 题目4 -->
+                                <div id="question-4" class="question hidden">
+                                    <h2 class="text-2xl font-bold mb-4 text-gray-800">问题 4/5</h2>
+                                    <p class="text-lg mb-6 text-gray-700">以下哪个孔裂是脊髓和延髓之间的连接处？</p>
+                                    <div class="space-y-3">
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="true" data-part="foramen-magnum">
+                                            <span class="font-medium">A. 枕骨大孔</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="optic-canal">
+                                            <span class="font-medium">B. 视神经管</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="jugular-foramen">
+                                            <span class="font-medium">C. 颈静脉孔</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="none">
+                                            <span class="font-medium">D. 破裂孔</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 题目5 -->
+                                <div id="question-5" class="question hidden">
+                                    <h2 class="text-2xl font-bold mb-4 text-gray-800">问题 5/5</h2>
+                                    <p class="text-lg mb-6 text-gray-700">颅骨骨折最常见于哪个部位？</p>
+                                    <div class="space-y-3">
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="fracture-frontal">
+                                            <span class="font-medium">A. 额骨</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="true" data-part="fracture-temporal">
+                                            <span class="font-medium">B. 颞骨</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="fracture-parietal">
+                                            <span class="font-medium">C. 顶骨</span>
+                                        </div>
+                                        <div class="option option-hover p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer" data-correct="false" data-part="none">
+                                            <span class="font-medium">D. 枕骨</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 结果页面 -->
+                                <div id="result" class="hidden">
+                                    <h2 class="text-2xl font-bold mb-4 text-gray-800">测验完成！</h2>
+                                    <div class="bg-gray-100 p-6 rounded-lg mb-6">
+                                        <p class="text-lg mb-2">你的得分：<span id="score" class="font-bold text-primary">0</span>/5</p>
+                                        <div class="w-full bg-gray-200 rounded-full h-4 mb-4">
+                                            <div id="score-bar" class="bg-primary h-4 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                        <p id="result-message" class="text-gray-700"></p>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <button id="review-btn" class="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition flex items-center justify-center">
+                                            <i class="fa fa-eye mr-2"></i> 查看解析
+                                        </button>
+                                        <button id="restart-btn" class="w-full py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition flex items-center justify-center">
+                                            <i class="fa fa-refresh mr-2"></i> 重新开始
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 解析区域 -->
+                            <div id="explanation" class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100 hidden">
+                                <h3 class="text-lg font-bold mb-2 text-blue-800">解析</h3>
+                                <p id="explanation-text" class="text-blue-700"></p>
+                            </div>
+                            
+                            <!-- 导航按钮 -->
+                            <div id="navigation-buttons" class="mt-8 flex justify-between">
+                                <button id="prev-btn" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+                                    <i class="fa fa-arrow-left mr-2"></i> 上一题
+                                </button>
+                                <button id="next-btn" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+                                    下一题 <i class="fa fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="bg-gray-800 text-white py-6">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-sm mb-4 md:mb-0">© 2025 颅脑骨性结构解剖学测验 | 专为解剖学教师设计</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fa fa-book"></i> 学习资源
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fa fa-question-circle"></i> 帮助中心
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fa fa-envelope"></i> 联系我们
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 帮助模态框 -->
+    <div id="help-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">使用帮助</h3>
+                    <button id="close-help" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="space-y-4 text-gray-700">
+                    <p><i class="fa fa-info-circle text-primary mr-2"></i> 本测验包含5道关于颅脑骨性结构的题目，涵盖颅骨组成、颅底结构、颅缝等知识点。</p>
+                    <p><i class="fa fa-mouse-pointer text-primary mr-2"></i> 点击选项进行答题，正确答案会在解剖图上高亮显示。</p>
+                    <p><i class="fa fa-lightbulb-o text-primary mr-2"></i> 每道题答完后可以查看解析，帮助巩固知识点。</p>
+                    <p><i class="fa fa-trophy text-primary mr-2"></i> 完成所有题目后可以查看得分和总体评价。</p>
+                    <p><i class="fa fa-refresh text-primary mr-2"></i> 可以随时重新开始测验，挑战更高分数。</p>
+                </div>
+                <div class="mt-6">
+                    <button id="got-it" class="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition">
+                        我知道了
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 解析模态框 -->
+    <div id="review-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">题目解析</h3>
+                    <button id="close-review" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="space-y-6">
+                    <!-- 解析内容将通过JavaScript动态生成 -->
+                </div>
+                <div class="mt-6">
+                    <button id="close-review-btn" class="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition">
+                        关闭
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 题目解析数据
+        const explanations = [
+            {
+                question: "以下哪块颅骨不属于脑颅骨？",
+                correctAnswer: "C. 上颌骨",
+                explanation: "脑颅骨由8块骨组成，包括额骨、顶骨、枕骨、颞骨、蝶骨和筛骨。上颌骨属于面颅骨，构成面部中央，参与形成眼眶、鼻腔和口腔的骨性支架。"
+            },
+            {
+                question: "颅底内面观中，哪个颅窝最深且面积最大，容纳小脑、脑桥和延髓？",
+                correctAnswer: "C. 颅后窝",
+                explanation: "颅底内面观自前向后有三个呈阶梯状加深的陷窝，分别称颅前窝、颅中窝和颅后窝。颅后窝位置最深，主要由枕骨和颞骨岩部后部构成，容纳小脑、脑桥和延髓。"
+            },
+            {
+                question: "以下哪条颅缝位于左右顶骨之间？",
+                correctAnswer: "B. 矢状缝",
+                explanation: "矢状缝位于左右顶骨之间，呈矢状位走行。冠状缝位于额骨和顶骨之间，人字缝位于顶骨和枕骨之间，鳞状缝位于顶骨和颞骨之间。"
+            },
+            {
+                question: "以下哪个孔裂是脊髓和延髓之间的连接处？",
+                correctAnswer: "A. 枕骨大孔",
+                explanation: "枕骨大孔位于枕骨底部，是脊髓和延髓之间的连接处。视神经管通过视神经，颈静脉孔通过颈静脉和部分颅神经，破裂孔在活体为软骨所封闭。"
+            },
+            {
+                question: "颅骨骨折最常见于哪个部位？",
+                correctAnswer: "B. 颞骨",
+                explanation: "颅骨骨折最常见于颞骨，因为颞骨位置较低且骨质较薄，容易受到外力撞击。其次是顶骨和额骨。"
+            }
+        ];
+
+        // 用户答案存储
+        let userAnswers = [null, null, null, null, null];
+        let currentQuestion = 0;
+
+        // DOM元素
+        const questions = document.querySelectorAll('.question');
+        const questionImages = document.querySelectorAll('.question-image');
+        const options = document.querySelectorAll('.option');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const mobileProgressBar = document.getElementById('mobile-progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const mobileProgressText = document.getElementById('mobile-progress-text');
+        const result = document.getElementById('result');
+        const score = document.getElementById('score');
+        const scoreBar = document.getElementById('score-bar');
+        const resultMessage = document.getElementById('result-message');
+        const restartBtn = document.getElementById('restart-btn');
+        const reviewBtn = document.getElementById('review-btn');
+        const explanation = document.getElementById('explanation');
+        const explanationText = document.getElementById('explanation-text');
+        const helpBtn = document.getElementById('help-btn');
+        const helpModal = document.getElementById('help-modal');
+        const closeHelp = document.getElementById('close-help');
+        const gotIt = document.getElementById('got-it');
+        const reviewModal = document.getElementById('review-modal');
+        const closeReview = document.getElementById('close-review');
+        const closeReviewBtn = document.getElementById('close-review-btn');
+        const resultImage = document.getElementById('result-image');
+
+        // 初始化
+        function init() {
+            // 设置选项点击事件
+            options.forEach(option => {
+                option.addEventListener('click', () => {
+                    const questionIndex = parseInt(option.closest('.question').id.split('-')[1]) - 1;
+                    const isCorrect = option.dataset.correct === 'true';
+                    const part = option.dataset.part;
+                    
+                    // 记录用户答案
+                    userAnswers[questionIndex] = {
+                        option: option.textContent.trim(),
+                        isCorrect,
+                        part
+                    };
+                    
+                    // 更新选项样式
+                    const questionOptions = option.closest('.question').querySelectorAll('.option');
+                    questionOptions.forEach(opt => {
+                        opt.classList.remove('bg-green-100', 'bg-red-100', 'border-green-500', 'border-red-500');
+                        opt.classList.add('bg-gray-50', 'border-gray-200');
+                    });
+                    
+                    option.classList.remove('bg-gray-50', 'border-gray-200');
+                    if (isCorrect) {
+                        option.classList.add('bg-green-100', 'border-green-500');
+                    } else {
+                        option.classList.add('bg-red-100', 'border-red-500');
+                        
+                        // 高亮正确答案
+                        questionOptions.forEach(opt => {
+                            if (opt.dataset.correct === 'true') {
+                                opt.classList.remove('bg-gray-50', 'border-gray-200');
+                                opt.classList.add('bg-green-100', 'border-green-500');
+                            }
+                        });
+                    }
+                    
+                    // 高亮解剖图对应部分
+                    highlightAnatomyPart(questionIndex, part, isCorrect);
+                    
+                    // 显示解析
+                    showExplanation(questionIndex);
+                });
+            });
+            
+            // 设置导航按钮事件
+            prevBtn.addEventListener('click', () => {
+                if (currentQuestion > 0) {
+                    currentQuestion--;
+                    showQuestion(currentQuestion);
+                }
+            });
+            
+            nextBtn.addEventListener('click', () => {
+                if (currentQuestion < 4) {
+                    currentQuestion++;
+                    showQuestion(currentQuestion);
+                } else {
+                    showResult();
+                }
+            });
+            
+            // 设置重新开始按钮事件
+            restartBtn.addEventListener('click', restartQuiz);
+            
+            // 设置查看解析按钮事件
+            reviewBtn.addEventListener('click', showReview);
+            
+            // 设置帮助按钮事件
+            helpBtn.addEventListener('click', () => {
+                helpModal.classList.remove('hidden');
+            });
+            
+            closeHelp.addEventListener('click', () => {
+                helpModal.classList.add('hidden');
+            });
+            
+            gotIt.addEventListener('click', () => {
+                helpModal.classList.add('hidden');
+            });
+            
+            // 设置解析模态框事件
+            closeReview.addEventListener('click', () => {
+                reviewModal.classList.add('hidden');
+            });
+            
+            closeReviewBtn.addEventListener('click', () => {
+                reviewModal.classList.add('hidden');
+            });
+            
+            // 显示第一题
+            showQuestion(0);
+        }
+
+        // 显示当前问题
+        function showQuestion(index) {
+            // 更新问题显示
+            questions.forEach((q, i) => {
+                q.classList.toggle('hidden', i !== index);
+            });
+            
+            // 更新图片显示
+            questionImages.forEach((img, i) => {
+                img.classList.toggle('hidden', i !== index);
+            });
+            
+            // 隐藏结果
+            result.classList.add('hidden');
+            resultImage.classList.add('hidden');
+            
+            // 更新进度条
+            const progress = ((index + 1) / 5) * 100;
+            progressBar.style.width = `${progress}%`;
+            mobileProgressBar.style.width = `${progress}%`;
+            progressText.textContent = `${index + 1}/5`;
+            mobileProgressText.textContent = `${index + 1}/5`;
+            
+            // 更新导航按钮状态
+            prevBtn.disabled = index === 0;
+            nextBtn.textContent = index === 4 ? '完成' : '下一题';
+            
+            // 如果用户已经回答过当前问题，显示之前的选择和解析
+            if (userAnswers[index] !== null) {
+                const questionOptions = questionsImages[index].closest('.question').querySelectorAll('.option');
+                questionOptions.forEach(opt => {
+                    if (opt.textContent.trim() === userAnswers[index].option) {
+                        opt.click();
+                    }
+                });
+            } else {
+                // 重置选项样式
+                const questionOptions = document.querySelectorAll(`#question-${index + 1} .option`);
+                questionOptions.forEach(opt => {
+                    opt.classList.remove('bg-green-100', 'bg-red-100', 'border-green-500', 'border-red-500');
+                    opt.classList.add('bg-gray-50', 'border-gray-200');
+                });
+                
+                // 隐藏解析
+                explanation.classList.add('hidden');
+                
+                // 隐藏解剖图高亮
+                const highlights = document.querySelectorAll(`#question-${index + 1}-image [id^="highlight-"]`);
+                highlights.forEach(highlight => {
+                    highlight.classList.add('hidden');
+                });
+            }
+        }
+
+        // 高亮解剖图对应部分
+        function highlightAnatomyPart(questionIndex, part, isCorrect) {
+            // 隐藏所有高亮
+            const highlights = document.querySelectorAll(`#question-${questionIndex + 1}-image [id^="highlight-"]`);
+            highlights.forEach(highlight => {
+                highlight.classList.add('hidden');
+            });
+            
+            // 高亮正确答案
+            const correctOption = document.querySelector(`#question-${questionIndex + 1} .option[data-correct="true"]`);
+            const correctPart = correctOption.dataset.part;
+            const correctHighlight = document.getElementById(`highlight-${correctPart}`);
+            
+            if (correctHighlight) {
+                correctHighlight.classList.remove('hidden');
+                correctHighlight.style.borderColor = isCorrect ? '#10b981' : '#ef4444';
+            }
+            
+            // 如果选择错误，也高亮用户选择的部分
+            if (!isCorrect && part) {
+                const userHighlight = document.getElementById(`highlight-${part}`);
+                if (userHighlight && userHighlight !== correctHighlight) {
+                    userHighlight.classList.remove('hidden');
+                    userHighlight.style.borderColor = '#ef4444';
+                }
+            }
+        }
+
+        // 显示解析
+        function showExplanation(questionIndex) {
+            explanationText.textContent = explanations[questionIndex].explanation;
+            explanation.classList.remove('hidden');
+        }
+
+        // 显示结果
+        function showResult() {
+            // 计算得分
+            const correctAnswers = userAnswers.filter(answer => answer && answer.isCorrect).length;
+            score.textContent = correctAnswers;
+            scoreBar.style.width = `${(correctAnswers / 5) * 100}%`;
+            
+            // 设置结果消息
+            if (correctAnswers === 5) {
+                resultMessage.textContent = "太棒了！你对颅脑骨性结构有非常深入的理解！";
+            } else if (correctAnswers >= 3) {
+                resultMessage.textContent = "不错的表现！你已经掌握了大部分颅脑骨性结构的知识。";
+            } else {
+                resultMessage.textContent = "继续努力！建议重新学习颅脑骨性结构的基础知识。";
+            }
+            
+            // 显示结果
+            questions.forEach(q => q.classList.add('hidden'));
+            questionImages.forEach(img => img.classList.add('hidden'));
+            result.classList.remove('hidden');
+            resultImage.classList.remove('hidden');
+            explanation.classList.add('hidden');
+        }
+
+        // 重新开始测验
+        function restartQuiz() {
+            userAnswers = [null, null, null, null, null];
+            currentQuestion = 0;
+            showQuestion(0);
+        }
+
+        // 显示解析
+        function showReview() {
+            const reviewContent = reviewModal.querySelector('.space-y-6');
+            reviewContent.innerHTML = '';
+            
+            explanations.forEach((exp, index) => {
+                const isCorrect = userAnswers[index] && userAnswers[index].isCorrect;
+                const userAnswer = userAnswers[index] ? userAnswers[index].option : '未作答';
+                
+                const questionElement = document.createElement('div');
+                questionElement.className = 'p-4 rounded-lg border ' + (isCorrect ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100');
+                questionElement.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 mt-1">
+                            <span class="inline-flex items-center justify-center h-6 w-6 rounded-full ${isCorrect ? 'bg-green-500' : 'bg-red-500'} text-white text-sm">
+                                ${isCorrect ? '<i class="fa fa-check"></i>' : '<i class="fa fa-times"></i>'}
+                            </span>
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="text-lg font-medium ${isCorrect ? 'text-green-800' : 'text-red-800'}">问题 ${index + 1}: ${exp.question}</h4>
+                            <div class="mt-2">
+                                <p class="text-sm ${isCorrect ? 'text-green-700' : 'text-red-700'}">你的答案: ${userAnswer}</p>
+                                <p class="text-sm text-gray-700">正确答案: ${exp.correctAnswer}</p>
+                            </div>
+                            <div class="mt-3 text-sm text-gray-600">
+                                <p>${exp.explanation}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                reviewContent.appendChild(questionElement);
+            });
+            
+            reviewModal.classList.remove('hidden');
+        }
+
+        // 初始化测验
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
